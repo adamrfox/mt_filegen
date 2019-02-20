@@ -7,6 +7,9 @@ import sys
 import Queue
 import random
 import shutil
+from collections import defaultdict
+import copy
+import math
 
 
 def get_bytes (size, unit):
@@ -19,74 +22,68 @@ def get_bytes (size, unit):
         sys.exit (1)
     return (size)
 
-def calculate_total_dirs (depth):
+def calculate_total_dirs (ctd_depth):
     total = 1
-    while len(depth) > 0:
+    ct_depth = copy.deepcopy(ctd_depth)
+    while len(ct_depth) > 0:
         p = 1;
-        for x in range(len(depth)):
-            p *= int(depth[x])
+        for x in range(len(ct_depth)):
+            p *= int(ct_depth[x])
         total += p
-        depth.pop()
+        ct_depth.pop()
     return (total)
 
-def calc_files_per_dir_bottom (depth, files_per_thread):
+def calc_files_per_dir_bottom (depth, num_files):
     total = 1
     for d in depth:
         total *= int(d)
-    return total
+    ftotal = int(math.ceil(num_files / total))
+    return ftotal
 
-def build_out (dir, depth, ext, files_per_dir, file_size, distribution):
-    ldepth = list(depth)
-    if ((distribution == "mixed") or (distribution == "bottom" and len(ldepth) == 0)):
-        for x in range (files_per_dir):
-            fn = random.randint(0,width*files_per_thread)
-            fn = '%x' % fn
-            fname = dir + "/" + "file_" + str(fn) + "." + ext
-            with open (fname, "wb") as fout:
-                fout.write (os.urandom(file_size))
-            if verbose:
-                print "\tWrote " + fname
-    try:
-        d = int(ldepth.pop(0))
-    except IndexError:
-        return(0)
-    for x in range (d):
-        new_dir = dir + "/dir" + str(x)
-        os.mkdir (new_dir)
-        build_out (new_dir, ldepth, ext, files_per_dir, file_size, distribution)
-    return (0)
 
-def build_dir (root, job_dir, depth, ext, files_per_thread, file_size, distribution):
-    print "JOB " + job_dir + " started"
-    pdir_root= root + "/" + job_dir
-    ldepth = list(depth)
-    try:
-        os.mkdir (pdir_root)
-    except OSError:
-        print "Cleaning up " + pdir_root
-        shutil.rmtree(pdir_root, ignore_errors=True)
-        os.mkdir(pdir_root)
-    if len(ldepth) == 1:
-        real_depth = int(ldepth[0])
-        ldepth = []
-        for i in range (real_depth):
-            ldepth.append('1')
-    total_dirs = calculate_total_dirs (ldepth)
-    if distribution == "mixed":
-        files_per_dir = int(round(files_per_thread/total_dirs))
-    elif distribution == "bottom":
-        files_per_dir = calc_files_per_dir_bottom (depth, files_per_thread)
-    print "JOB " + job_dir + " writing"
-    build_out (pdir_root, depth, ext, files_per_dir, file_size, distribution)
-    run_queue.get()
-    print "JOB " + job_dir + " done."
-
-def clean_dir (dir):
+def clean_dir (dir_ent):
+    dir = dir_ent.keys()[0]
     print "Cleaning " + dir
     shutil.rmtree(dir, ignore_errors=True)
     run_queue.get()
     print "Done cleaning " + dir
     return (0)
+
+def write_files (dir_ent, files_per_dir, ext, file_size):
+    dir = dir_ent.keys()[0]
+    if dir_ent[dir]:
+        print "Writing " + str(files_per_dir) + " files into " + dir
+        for x in range(0,files_per_dir):
+            clash = True
+            while clash:
+                fn = random.randint(0, width * files_per_thread * 1000)
+                fn = '%x' % fn
+                fname = dir + "/" + "file_" + str(fn) + "." + ext
+                if not os.path.isfile(fname):
+                    clash = False
+            with open(fname, "wb") as fout:
+                fout.write(os.urandom(file_size))
+            if verbose:
+                print "\tWrote " + fname
+    print "Finished " + dir
+    run_queue.get()
+
+def build_dir_list(base, depth, distribution):
+    ldepth = copy.deepcopy(depth)
+    entry = {}
+    try:
+        x = ldepth.pop(0)
+    except IndexError:
+        return(0)
+    for d in range(int(x)):
+        new_base = base + "/dir" + str(d)
+        if (distribution == "mixed") or (distribution == "bottom" and len(ldepth) == 0):
+            entry = {new_base : True}
+        else:
+            entry = {new_base : False}
+        dir_queue.put (entry)
+        build_dir_list (new_base, ldepth, distribution)
+
 
 def usage():
     sys.stderr.write("Usage: mt_filegen.py [-hvC] [-d depth] [-s size] [-n number_files] [-e ext] [-t threads] [-D distrubtion] directory\n")
@@ -105,7 +102,7 @@ def usage():
 
 if __name__ == "__main__":
     ext = "dat"
-    threads = 1
+    threads = 0
     width = 1
     depth = ['1']
     size_s = ''
@@ -122,7 +119,7 @@ if __name__ == "__main__":
 
     optlist, args = getopt.getopt(sys.argv[1:], 'hd:w:e:s:n:t:D:Cv', ['help', 'depth=', 'width=', 'size=', 'numfiles=', 'ext=','threads=', 'distribute=', 'cleanup', 'verbose'])
     for opt, a in optlist:
-        if opt in ('-d', "--'depth"):
+        if opt in ('-d', "--depth"):
             depth = a.split(':')
         if opt in ('-w', "--width"):
             width_flag = True
@@ -147,31 +144,69 @@ if __name__ == "__main__":
         if opt in ('-h', "--help"):
             usage()
     root = args[0]
-    global run_queue
     run_queue = Queue.Queue(maxsize=threads)
+    dir_queue = Queue.Queue()
     if not cleanup:
-        files_per_thread = int(num_files/width)
         file_size = int(round(size/num_files))
-    if cleanup:
+    else:
         ld = os.listdir(root)
         for w in ld:
             if w != ".snapshot" and w != "~snapshot":
-                thread_queue.put(root + "/" + w)
-    else:
+                dname = root + "/" + w
+                d_ent = {dname : True}
+                dir_queue.put(d_ent)
+    depth_save = copy.deepcopy(depth)
+    ti = 0
+    if not cleanup:
         for w in range (width):
-            thread_queue.put('p' + str(w))
-    while (not thread_queue.empty()):
-        while (not run_queue.full() and not thread_queue.empty()):
-            job_dir = thread_queue.get()
-            if not cleanup:
-                orig_depth = list(depth)
-                job.append(threading.Thread (target=build_dir, args=(root, job_dir, orig_depth, ext, files_per_thread, file_size, distribution)))
-                job[ti].start()
+            dir_base = root + "/p" + str(w)
+            if (distribution == "mixed" or (distribution == "bottom" and len(dpeth_save) == 0)):
+                dir_entry = {dir_base : True}
             else:
-                cjob.append(threading.Thread(target=clean_dir, args=([job_dir])))
-                cjob[ti].start()
-            run_queue.put(ti)
-            ti += 1
-        if not thread_queue.empty():
-            time.sleep(5)
+                dir_entry = {dir_base : False}
+            dir_queue.put(dir_entry)
+            build_dir_list (dir_base, depth_save, distribution)
+            print dir_queue.queue
+        if distribution == "mixed":
+            files_per_thread = int(math.ceil(num_files / dir_queue.qsize()))
+        elif distribution == "bottom":
+            ldepth = copy.deepcopy(depth)
+            files_per_thread = calc_files_per_dir_bottom(ldepth, num_files)
+    while not dir_queue.empty():
+        dir = dir_queue.get()
+        dir_name = dir.keys()[0]
+        if not cleanup:
+            try:
+              os.mkdir(dir_name)
+            except OSError:
+                print "Cleaning " + dir_name
+                shutil.rmtree(dir_name)
+                os.mkdir(dir_name)
+            if threads > 0:
+                while run_queue.full():
+                    time.sleep(1)
+            run_queue.put(dir)
+            job.append (threading.Thread(target=write_files, args=(dir,files_per_thread,ext,file_size)))
+        else:
+            if threads > 0:
+                while run_queue.full():
+                    time.sleep (1)
+            run_queue.put(dir)
+            job.append (threading.Thread(target=clean_dir, args=([dir])))
+        job[ti].start()
+        ti += 1
+    if not run_queue.empty():
+        print "Waiting for " + str(run_queue.qsize()) + " threads to finish"
+        while not run_queue.empty():
+            time.sleep (5)
+    print "Done"
+    sys.exit(0)
+
+
+
+
+
+
+
+
 
