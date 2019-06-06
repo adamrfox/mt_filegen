@@ -75,6 +75,7 @@ def write_files (dir_ent, files_per_dir, ext, file_size):
             if verbose:
                 print "\tWrote " + fname
             fout.close()
+            file_count.increment()
     print "Finished " + dir
     run_queue.get()
 
