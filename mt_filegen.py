@@ -105,10 +105,20 @@ def write_files (dir_ent, files_per_dir, ext, file_size, num_files):
             with open(fname, "wb") as fout:
                 while bytes_written < file_size:
                     if file_size - bytes_written < WRITE_SIZE:
-                        fout.write(os.urandom(file_size - bytes_written))
+                        if compressable:
+                            c_size = int((file_size - bytes_written) / 2)
+                            fout.write('\0' * c_size)
+                            fout.write(os.urandom(c_size))
+                        else:
+                            fout.write(os.urandom(file_size - bytes_written))
                         bytes_written += file_size - bytes_written
                     else:
-                        fout.write(WRITE_SIZE)
+                        if compressable:
+                            c_size = int(WRITE_SIZE / 2)
+                            fout.write('\0' * c_size)
+                            fout.write(urandom(WRITE_SIZE))
+                        else:
+                            fout.write(os.urandom(WRITE_SIZE))
                         bytes_written += WRITE_SIZE
                 file_count.increment()
             fout.close()
@@ -248,8 +258,9 @@ if __name__ == "__main__":
     file_count = AtomicCounter()
     bd_list = []
     WRITE_SIZE = 2097152
+    compressable = False
 
-    optlist, args = getopt.getopt(sys.argv[1:], 'hd:e:s:n:t:D:Cvr', ['help', 'depth=', 'size=', 'numfiles=', 'ext=','threads=', 'distribute=', 'cleanup', 'verbose', 'roundup'])
+    optlist, args = getopt.getopt(sys.argv[1:], 'hd:e:s:n:t:D:Cvrc', ['help', 'depth=', 'size=', 'numfiles=', 'ext=','threads=', 'distribute=', 'cleanup', 'verbose', 'roundup', 'compressable'])
     for opt, a in optlist:
         if opt in ('-d', "--depth"):
             depth = a.split(':')
@@ -272,6 +283,8 @@ if __name__ == "__main__":
             verbose = True
         if opt in ('-r', "--roundup"):
             roundup = True
+        if opt in ('-c', "--compressable"):
+            compressable = True
         if opt in ('-h', "--help"):
             usage()
     root = args[0]
