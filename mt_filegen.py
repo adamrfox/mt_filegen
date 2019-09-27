@@ -240,7 +240,7 @@ def usage():
     sys.stderr.write("-c | --compressable : Ensure files are compressable\n")
     sys.stderr.write("-d | --depth depth_string : Describes the depth of the tree.  A simple int goes N levels deep.\n")
     sys.stderr.write("    X:Y:Z creates 3 levels deep the first level is X wide, the next level Y wide, then Z wide, etc.\n")
-    sys.stderr.write("-s | --size X : Makes the total size of the dataset to X.  Follow X with either G or T for Gigabytes or Terrabytes, e.g. 100G or 1T\n")
+    sys.stderr.write("-s | --size X : Makes the total size of the dataset to X.  Follow X with either M, G or T for Megabutes, Gigabytes or Terrabytes, e.g. 100G or 1T\n")
     sys.stderr.write("-n | --numfiles N : Creates a total of N files\n")
     sys.stderr.write("-e | --ext X : Makes X the extension of the files.  Default is dat")
     sys.stderr.write("-t | --threads T : Runs up to T threads.  Each thread works on a top level directory (px)\n")
