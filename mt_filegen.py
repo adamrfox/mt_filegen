@@ -1,10 +1,15 @@
 #!/usr/bin/python
+
+from __future__ import print_function
 import threading
 import getopt
 import time
 import os
 import sys
-import Queue
+if int(sys.version[0]) < 3:
+    import Queue
+else:
+    import queue as Queue
 import random
 import shutil
 from collections import defaultdict
@@ -82,17 +87,19 @@ def max_files_check (dir_queue, files_per_thread, num_files):
 
 def clean_dir (dir_ent):
     dir = dir_ent.keys()[0]
-    print "Cleaning " + dir
+    print("Cleaning " + dir)
     shutil.rmtree(dir, ignore_errors=True)
     run_queue.get()
-    print "Done cleaning " + dir
+    print("Done cleaning " + dir)
     return (0)
 
 def write_files (dir_ent, files_per_dir, ext, file_size, num_files):
     global file_count
-    dir = dir_ent.keys()[0]
+#    dir = dir_ent.keys()[0]
+    dir_l = list(dir_ent.keys())
+    dir = dir_l[0]
     if dir_ent[dir]:
-        print "Writing " + str(files_per_dir) + " files into " + dir
+        print ("Writing " + str(files_per_dir) + " files into " + dir)
         for x in range(0,files_per_dir):
             clash = True
             while clash:
@@ -107,7 +114,7 @@ def write_files (dir_ent, files_per_dir, ext, file_size, num_files):
                     if file_size - bytes_written < WRITE_SIZE:
                         if compressible:
                             c_size = int((file_size - bytes_written) / 2)
-                            fout.write('\0' * c_size)
+                            fout.write(b'\0' * c_size)
                             fout.write(os.urandom(c_size))
                         else:
                             fout.write(os.urandom(file_size - bytes_written))
@@ -115,7 +122,7 @@ def write_files (dir_ent, files_per_dir, ext, file_size, num_files):
                     else:
                         if compressible:
                             c_size = int(WRITE_SIZE / 2)
-                            fout.write('\0' * c_size)
+                            fout.write(b'\0' * c_size)
                             fout.write(urandom(WRITE_SIZE))
                         else:
                             fout.write(os.urandom(WRITE_SIZE))
@@ -123,7 +130,7 @@ def write_files (dir_ent, files_per_dir, ext, file_size, num_files):
                 file_count.increment()
             fout.close()
             if verbose:
-                print "\tWrote " + fname + " (" + fcount.value + "/" + num_files
+                print ("\tWrote " + fname + " (" + fcount.value + "/" + num_files)
     run_queue.get()
 '''
 def build_dir_list(base, depth, distribution):
@@ -182,12 +189,12 @@ def round_up (root, delta, dir_queue, threads, ext, file_size, rdepth, width, di
         files_per_thread = calc_files_per_dir_bottom(ldepth, delta, width)
     dir_queue = max_files_check (dir_queue, files_per_thread, num_files)
     mt_writer(dir_queue, cleanup, True, threads, ext, file_size, files_per_thread, num_files)
-    print "First round up done: " + str(file_count.value)
+    print ("First round up done: " + str(file_count.value))
     new_delta = num_files - file_count.value
     if new_delta > 0:
         new_dir_queue = Queue.Queue()
         new_dir_queue.put(first_dir_entry)
-        print "Final round up: " + str(new_delta) + " files"
+        print ("Final round up: " + str(new_delta) + " files")
         mt_writer (dir_queue, cleanup, True, threads, ext, file_size, new_delta)
 
 
@@ -195,13 +202,15 @@ def mt_writer (dir_queue, cleanup, skip_clean, threads, ext, file_size, files_pe
     global ti
     while not dir_queue.empty():
         dir = dir_queue.get()
-        dir_name = dir.keys()[0]
+#        dir_name = dir.keys()[0]
+        dir_name_l = list(dir.keys())
+        dir_name = dir_name_l[0]
         if not cleanup:
             if not skip_clean:
                 try:
                     os.mkdir(dir_name)
                 except OSError:
-                    print "Cleaning " + dir_name
+                    print("Cleaning " + dir_name)
                     shutil.rmtree(dir_name)
                     os.mkdir(dir_name)
             if threads > 0:
@@ -219,18 +228,19 @@ def mt_writer (dir_queue, cleanup, skip_clean, threads, ext, file_size, files_pe
         ti += 1
     if not run_queue.empty():
         while not run_queue.empty():
-            print "Waiting for " + str(run_queue.qsize()) + " threads to finish"
+            print ("Waiting for " + str(run_queue.qsize()) + " threads to finish")
             time.sleep (5)
 
 
 def usage():
-    sys.stderr.write("Usage: mt_filegen.py [-hvC] [-d depth] [-s size] [-n number_files] [-e ext] [-t threads] [-D distrubtion] directory\n")
+    sys.stderr.write("Usage: mt_filegen.py [-hvCc] [-d depth] [-s size] [-n number_files] [-e ext] [-t threads] [-D distrubtion] directory\n")
     sys.stderr.write("-h | --help : Prints this message\n")
     sys.stderr.write ("-v | --verbose : Prints each filename as written\n")
     sys.stderr.write("-C | --cleanup : Cleanup files instead of create them\n")
+    sys.stderr.write("-c | --compressable : Ensure files are compressable\n")
     sys.stderr.write("-d | --depth depth_string : Describes the depth of the tree.  A simple int goes N levels deep.\n")
     sys.stderr.write("    X:Y:Z creates 3 levels deep the first level is X wide, the next level Y wide, then Z wide, etc.\n")
-    sys.stderr.write("-s | --size X : Makes the total size of the dataset to X.  Follow X with either G or T for Gigabytes or Terrabytes, e.g. 100G or 1T\n")
+    sys.stderr.write("-s | --size X : Makes the total size of the dataset to X.  Follow X with either M, G or T for Megabutes, Gigabytes or Terrabytes, e.g. 100G or 1T\n")
     sys.stderr.write("-n | --numfiles N : Creates a total of N files\n")
     sys.stderr.write("-e | --ext X : Makes X the extension of the files.  Default is dat")
     sys.stderr.write("-t | --threads T : Runs up to T threads.  Each thread works on a top level directory (px)\n")
@@ -351,8 +361,8 @@ if __name__ == "__main__":
     '''
     if roundup:
         delta = num_files - file_count.value
-        print "Rounding up " + str(delta) + " files"
+        print("Rounding up " + str(delta) + " files")
         round_up (root, delta, dir_queue, threads, ext, file_size, depth_save, width, distribution,num_files)
-    print "Wrote a total of " + str(file_count.value)
-    print "Done"
+    print("Wrote a total of " + str(file_count.value))
+    print ("Done")
     sys.exit(0)
