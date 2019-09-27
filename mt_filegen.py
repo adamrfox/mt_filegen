@@ -1,10 +1,15 @@
 #!/usr/bin/python
+
+from __future__ import print_function
 import threading
 import getopt
 import time
 import os
 import sys
-import Queue
+if int(sys.version[0]) < 3:
+    import Queue
+else:
+    import queue as Queue
 import random
 import shutil
 from collections import defaultdict
@@ -82,17 +87,17 @@ def max_files_check (dir_queue, files_per_thread, num_files):
 
 def clean_dir (dir_ent):
     dir = dir_ent.keys()[0]
-    print "Cleaning " + dir
+    print("Cleaning " + dir)
     shutil.rmtree(dir, ignore_errors=True)
     run_queue.get()
-    print "Done cleaning " + dir
+    print("Done cleaning " + dir)
     return (0)
 
 def write_files (dir_ent, files_per_dir, ext, file_size, num_files):
     global file_count
     dir = dir_ent.keys()[0]
     if dir_ent[dir]:
-        print "Writing " + str(files_per_dir) + " files into " + dir
+        print ("Writing " + str(files_per_dir) + " files into " + dir)
         for x in range(0,files_per_dir):
             clash = True
             while clash:
@@ -123,7 +128,7 @@ def write_files (dir_ent, files_per_dir, ext, file_size, num_files):
                 file_count.increment()
             fout.close()
             if verbose:
-                print "\tWrote " + fname + " (" + fcount.value + "/" + num_files
+                print ("\tWrote " + fname + " (" + fcount.value + "/" + num_files)
     run_queue.get()
 '''
 def build_dir_list(base, depth, distribution):
@@ -182,12 +187,12 @@ def round_up (root, delta, dir_queue, threads, ext, file_size, rdepth, width, di
         files_per_thread = calc_files_per_dir_bottom(ldepth, delta, width)
     dir_queue = max_files_check (dir_queue, files_per_thread, num_files)
     mt_writer(dir_queue, cleanup, True, threads, ext, file_size, files_per_thread, num_files)
-    print "First round up done: " + str(file_count.value)
+    print ("First round up done: " + str(file_count.value))
     new_delta = num_files - file_count.value
     if new_delta > 0:
         new_dir_queue = Queue.Queue()
         new_dir_queue.put(first_dir_entry)
-        print "Final round up: " + str(new_delta) + " files"
+        print ("Final round up: " + str(new_delta) + " files")
         mt_writer (dir_queue, cleanup, True, threads, ext, file_size, new_delta)
 
 
@@ -201,7 +206,7 @@ def mt_writer (dir_queue, cleanup, skip_clean, threads, ext, file_size, files_pe
                 try:
                     os.mkdir(dir_name)
                 except OSError:
-                    print "Cleaning " + dir_name
+                    print("Cleaning " + dir_name)
                     shutil.rmtree(dir_name)
                     os.mkdir(dir_name)
             if threads > 0:
@@ -219,7 +224,7 @@ def mt_writer (dir_queue, cleanup, skip_clean, threads, ext, file_size, files_pe
         ti += 1
     if not run_queue.empty():
         while not run_queue.empty():
-            print "Waiting for " + str(run_queue.qsize()) + " threads to finish"
+            print ("Waiting for " + str(run_queue.qsize()) + " threads to finish")
             time.sleep (5)
 
 
@@ -351,8 +356,8 @@ if __name__ == "__main__":
     '''
     if roundup:
         delta = num_files - file_count.value
-        print "Rounding up " + str(delta) + " files"
+        print("Rounding up " + str(delta) + " files")
         round_up (root, delta, dir_queue, threads, ext, file_size, depth_save, width, distribution,num_files)
-    print "Wrote a total of " + str(file_count.value)
-    print "Done"
+    print("Wrote a total of " + str(file_count.value))
+    print ("Done")
     sys.exit(0)
