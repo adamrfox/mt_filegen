@@ -95,7 +95,9 @@ def clean_dir (dir_ent):
 
 def write_files (dir_ent, files_per_dir, ext, file_size, num_files):
     global file_count
-    dir = dir_ent.keys()[0]
+#    dir = dir_ent.keys()[0]
+    dir_l = list(dir_ent.keys())
+    dir = dir_l[0]
     if dir_ent[dir]:
         print ("Writing " + str(files_per_dir) + " files into " + dir)
         for x in range(0,files_per_dir):
@@ -200,7 +202,9 @@ def mt_writer (dir_queue, cleanup, skip_clean, threads, ext, file_size, files_pe
     global ti
     while not dir_queue.empty():
         dir = dir_queue.get()
-        dir_name = dir.keys()[0]
+#        dir_name = dir.keys()[0]
+        dir_name_l = list(dir.keys())
+        dir_name = dir_name_l[0]
         if not cleanup:
             if not skip_clean:
                 try:
