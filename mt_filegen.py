@@ -243,7 +243,7 @@ def usage():
     sys.stderr.write("-s | --size X : Makes the total size of the dataset to X.  Follow X with either M, G or T for Megabutes, Gigabytes or Terrabytes, e.g. 100G or 1T\n")
     sys.stderr.write("-n | --numfiles N : Creates a total of N files\n")
     sys.stderr.write("-e | --ext X : Makes X the extension of the files.  Default is dat\n")
-    sys.stderr.write("-t | --threads T : Runs up to T threads.  Each thread works on a top level directory (px)\n")
+    sys.stderr.write("-t | --threads T : Runs up to T threads.  Each thread works on subdirectory\n")
     sys.stderr.write("-D | distrubute mixed|bottom : Set to 'mixed' files are written throutout the tree.  This is the default\n")
     sys.stderr.write("    Set to 'bottom' files are only written at the bottom of the tree\n")
     exit (0)
