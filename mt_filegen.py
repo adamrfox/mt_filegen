@@ -238,6 +238,7 @@ def usage():
     sys.stderr.write ("-v | --verbose : Prints each filename as written\n")
     sys.stderr.write("-C | --cleanup : Cleanup files instead of create them\n")
     sys.stderr.write("-c | --compressable : Ensure files are compressable\n")
+    sys.stderr.write("-r | --roundup : Make sure the exact number of files is written even if it goes over the size limit\n")
     sys.stderr.write("-d | --depth depth_string : Describes the depth of the tree.  A simple int goes N levels deep.\n")
     sys.stderr.write("    X:Y:Z creates 3 levels deep the first level is X wide, the next level Y wide, then Z wide, etc.\n")
     sys.stderr.write("-s | --size X : Makes the total size of the dataset to X.  Follow X with either M, G or T for Megabutes, Gigabytes or Terrabytes, e.g. 100G or 1T\n")
