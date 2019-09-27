@@ -114,7 +114,7 @@ def write_files (dir_ent, files_per_dir, ext, file_size, num_files):
                     if file_size - bytes_written < WRITE_SIZE:
                         if compressible:
                             c_size = int((file_size - bytes_written) / 2)
-                            fout.write('\0' * c_size)
+                            fout.write(b'\0' * c_size)
                             fout.write(os.urandom(c_size))
                         else:
                             fout.write(os.urandom(file_size - bytes_written))
@@ -122,7 +122,7 @@ def write_files (dir_ent, files_per_dir, ext, file_size, num_files):
                     else:
                         if compressible:
                             c_size = int(WRITE_SIZE / 2)
-                            fout.write('\0' * c_size)
+                            fout.write(b'\0' * c_size)
                             fout.write(urandom(WRITE_SIZE))
                         else:
                             fout.write(os.urandom(WRITE_SIZE))
@@ -233,10 +233,11 @@ def mt_writer (dir_queue, cleanup, skip_clean, threads, ext, file_size, files_pe
 
 
 def usage():
-    sys.stderr.write("Usage: mt_filegen.py [-hvC] [-d depth] [-s size] [-n number_files] [-e ext] [-t threads] [-D distrubtion] directory\n")
+    sys.stderr.write("Usage: mt_filegen.py [-hvCc] [-d depth] [-s size] [-n number_files] [-e ext] [-t threads] [-D distrubtion] directory\n")
     sys.stderr.write("-h | --help : Prints this message\n")
     sys.stderr.write ("-v | --verbose : Prints each filename as written\n")
     sys.stderr.write("-C | --cleanup : Cleanup files instead of create them\n")
+    sys.stderr.write("-c | --compressable : Ensure files are compressable\n")
     sys.stderr.write("-d | --depth depth_string : Describes the depth of the tree.  A simple int goes N levels deep.\n")
     sys.stderr.write("    X:Y:Z creates 3 levels deep the first level is X wide, the next level Y wide, then Z wide, etc.\n")
     sys.stderr.write("-s | --size X : Makes the total size of the dataset to X.  Follow X with either G or T for Gigabytes or Terrabytes, e.g. 100G or 1T\n")
