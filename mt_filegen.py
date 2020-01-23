@@ -123,7 +123,7 @@ def write_files (dir_ent, files_per_dir, ext, file_size, num_files):
                         if compressible:
                             c_size = int(WRITE_SIZE / 2)
                             fout.write(b'\0' * c_size)
-                            fout.write(urandom(WRITE_SIZE))
+                            fout.write(os.urandom(WRITE_SIZE))
                         else:
                             fout.write(os.urandom(WRITE_SIZE))
                         bytes_written += WRITE_SIZE
