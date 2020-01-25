@@ -105,7 +105,7 @@ def write_files (dir_ent, files_per_dir, ext, file_size, num_files):
             while clash:
                 fn = random.randint(0, width * files_per_thread * 1000)
                 fn = '%x' % fn
-                fname = dir + "/" + "file_" + str(fn) + "." + ext
+                fname = os.path.join(dir, 'file_' + str(fn) + "." + ext)
                 if not os.path.isfile(fname):
                     clash = False
             bytes_written = 0
@@ -141,7 +141,7 @@ def build_dir_list(base, depth, distribution):
     except IndexError:
         return(0)
     for d in range(int(x)):
-        new_base = base + "/dir" + str(d)
+        new_base = os.path.jon (base, 'dir' + str(d))
         if (distribution == "mixed") or (distribution == "bottom" and len(ldepth) == 0):
             entry = {new_base : True}
         else:
@@ -159,7 +159,7 @@ def build_dir_list (plist, depth, distribution):
         return (0)
     for x in range(d):
         for p in plist:
-            ent = p + "/dir" + str(x)
+            ent = os.path.join(p, 'dir' + str(x))
             new_plist.append(ent)
             if (distribution == "mixed") or (distribution == "bottom" and len(ldepth) == 0):
                 entry = {ent : True}
@@ -173,7 +173,7 @@ def build_dir_list (plist, depth, distribution):
 
 def round_up (root, delta, dir_queue, threads, ext, file_size, rdepth, width, distribution, num_files):
     for w in range(width):
-        dir_base = root + "/p" + str(w)
+        dir_base = os.path.join(root, 'p' + str(w))
         if (distribution == "mixed" or (distribution == "bottom" and len(depth_save) == 0)):
             dir_entry = {dir_base: True}
             dir_queue.put(dir_entry)
@@ -309,15 +309,16 @@ if __name__ == "__main__":
         files_per_thread = 0
         for w in ld:
             if w != ".snapshot" and w != "~snapshot":
-                dname = root + "/" + w
+                dname = os.path.join(root, w)
                 d_ent = {dname : True}
                 dir_queue.put(d_ent)
     width = int(depth.pop(0))
     depth_save = copy.deepcopy(depth)
     ti = 0
+    
     if not cleanup:
         for w in range (width):
-            dir_base = root + "/p" + str(w)
+            dir_base = os.path.join(root, 'p' + str(w))
             if (distribution == "mixed" or (distribution == "bottom" and len(depth_save) == 0)):
                 dir_entry = {dir_base : True}
             else:
