@@ -86,7 +86,7 @@ def max_files_check (dir_queue, files_per_thread, num_files):
     return (dir_queue)
 
 def clean_dir (dir_ent):
-    dir = dir_ent.keys()[0]
+    dir = list( dir_ent.keys())[0]
     print("Cleaning " + dir)
     shutil.rmtree(dir, ignore_errors=True)
     run_queue.get()
@@ -365,7 +365,6 @@ if __name__ == "__main__":
         delta = num_files - file_count.value
         print("Rounding up " + str(delta) + " files")
         round_up (root, delta, dir_queue, threads, ext, file_size, depth_save, width, distribution,num_files)
-    open(os.path.join(root, 'Initialized'), 'a').close()
     print("Wrote a total of " + str(file_count.value))
     print ("Done")
     sys.exit(0)
