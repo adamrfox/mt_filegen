@@ -69,7 +69,7 @@ def calc_files_per_dir_bottom (depth, num_files, width):
 
 def get_first_dir_entry (dir_queue):
     for x in range (dir_queue.qsize()):
-        if dir_queue.queue[x][dir_queue.queue[x].keys()[0]]:
+        if dir_queue.queue[x][list(dir_queue.queue[x].keys())[0]]:
             return dir_queue.queue[x].keys()[0]
 
 def max_files_check (dir_queue, files_per_thread, num_files):
