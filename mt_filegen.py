@@ -363,8 +363,9 @@ if __name__ == "__main__":
     '''
     if roundup:
         delta = num_files - file_count.value
-        print("Rounding up " + str(delta) + " files")
-        round_up (root, delta, dir_queue, threads, ext, file_size, depth_save, width, distribution,num_files)
+        if num_files > file_count.value:
+            print("Rounding up " + str(delta) + " files")
+            round_up (root, delta, dir_queue, threads, ext, file_size, depth_save, width, distribution,num_files)
     print("Wrote a total of " + str(file_count.value))
     print ("Done")
     sys.exit(0)
