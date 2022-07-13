@@ -235,7 +235,7 @@ def mt_writer (dir_queue, cleanup, skip_clean, threads, ext, file_size, files_pe
 
 
 def usage():
-    sys.stderr.write("Usage: mt_filegen.py [-hvCc] [-d depth] [-s size] [-n number_files] [-e ext] [-t threads] [-D distrubtion] directory\n")
+    sys.stderr.write("Usage: mt_filegen.py [-hvCc] [-d depth] [[-s size] | [-f size]] [-n number_files] [-e ext] [-t threads] [-D distrubtion] directory\n")
     sys.stderr.write("-h | --help : Prints this message\n")
     sys.stderr.write ("-v | --verbose : Prints each filename as written\n")
     sys.stderr.write("-C | --cleanup : Cleanup files instead of create them\n")
@@ -244,6 +244,7 @@ def usage():
     sys.stderr.write("-d | --depth depth_string : Describes the depth of the tree.  A simple int goes N levels deep.\n")
     sys.stderr.write("    X:Y:Z creates 3 levels deep the first level is X wide, the next level Y wide, then Z wide, etc.\n")
     sys.stderr.write("-s | --size X : Makes the total size of the dataset to X.  Follow X with either M, G or T for Megabutes, Gigabytes or Terrabytes, e.g. 100G or 1T\n")
+    sys.stderr.write("-f | --size X : Makes the file size of the dataset to X.  Follow X with either M, G or T for Megabutes, Gigabytes or Terrabytes, e.g. 100G or 1T\n")
     sys.stderr.write("-n | --numfiles N : Creates a total of N files\n")
     sys.stderr.write("-e | --ext X : Makes X the extension of the files.  Default is dat\n")
     sys.stderr.write("-t | --threads T : Runs up to T threads.  Each thread works on subdirectory\n")
