@@ -41,8 +41,10 @@ def get_bytes (size, unit):
         size = size * 1024 * 1024 * 1024 * 1024
     elif unit in ('m', 'M'):
         size = size * 1024 * 1024
+    elif unit in ('k', 'K'):
+        size = size * 1024
     else:
-        sys.stderr.write("Acceptable units are 'M', 'G' or 'T' case insensitive\n")
+        sys.stderr.write("Acceptable units are 'K', 'M', 'G' or 'T' case insensitive\n")
         sys.exit (1)
     return (size)
 
@@ -258,6 +260,7 @@ if __name__ == "__main__":
     size = 0
     ti = 0
     num_files = 0
+    file_size = 0
     thread_queue = Queue.Queue()
     job = []
     cjob = []
@@ -271,7 +274,7 @@ if __name__ == "__main__":
     WRITE_SIZE = 2097152
     compressible = False
 
-    optlist, args = getopt.getopt(sys.argv[1:], 'hd:e:s:n:t:D:Cvrc', ['help', 'depth=', 'size=', 'numfiles=', 'ext=','threads=', 'distribute=', 'cleanup', 'verbose', 'roundup', 'compressible'])
+    optlist, args = getopt.getopt(sys.argv[1:], 'hd:e:s:n:t:D:f:Cvrc', ['help', 'depth=', 'size=', 'numfiles=', 'ext=','threads=', 'distribute=', 'cleanup', 'verbose', 'roundup', 'compressible', 'filesize='])
     for opt, a in optlist:
         if opt in ('-d', "--depth"):
             depth = a.split(':')
@@ -296,16 +299,29 @@ if __name__ == "__main__":
             roundup = True
         if opt in ('-c', "--compressible"):
             compressible = True
+        if opt in ('-f', '--filesize'):
+            size_s = a
+            if size_s[-1].isalpha():
+                unit = size_s[-1]
+                file_size = int(size_s[:-1])
+                file_size = get_bytes(file_size, unit)
+            else:
+                file_size = int(size_s)
+            size = 0
         if opt in ('-h', "--help"):
             usage()
+    if size and file_size:
+        sys.stderr.write('Both -s and -f cannot be used at the same time\n')
+        exit(2)
     root = args[0]
     run_queue = Queue.Queue(maxsize=threads)
     dir_queue = Queue.Queue()
     if not cleanup:
-        file_size = int(round(size/num_files))
+        if not file_size:
+            file_size = int(round(size/num_files))
     else:
         ld = os.listdir(root)
-        file_size = 0
+#        file_size = 0
         files_per_thread = 0
         for w in ld:
             if w != ".snapshot" and w != "~snapshot":
