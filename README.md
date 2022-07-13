@@ -10,7 +10,7 @@ It currently is set to run with Python 2.7 or 3.x.  If you find code compatibili
 
 Let's start with the syntax:
 <pre>
-Usage: mt_filegen.py [-hvCcr] [-d depth] [-s size] [-n number_files] [-e ext] [-t threads] [-D distrubtion] directory
+Usage: mt_filegen.py [-hvCcr] [-d depth] [[-s size] | [-f size]] [-n number_files] [-e ext] [-t threads] [-D distrubtion] directory
 -h | --help : Prints this message
 -v | --verbose : Prints each filename as written
 -C | --cleanup : Cleanup files instead of create them
@@ -18,7 +18,8 @@ Usage: mt_filegen.py [-hvCcr] [-d depth] [-s size] [-n number_files] [-e ext] [-
 -r | --roundup : Make sure the exact number of files is written even if it goes over the size limit
 -d | --depth depth_string : Describes the depth of the tree.  A simple int goes N levels deep.
     X:Y:Z creates 3 levels deep the first level is X wide, the next level Y wide, then Z wide, etc.
--s | --size X : Makes the total size of the dataset to X.  Follow X with either M, G or T for Megabutes, Gigabytes or Terrabytes, e.g. 100G or 1T
+-s | --size=X : Makes the total size of the dataset to X.  Follow X with either K, M, G or T for Kilobytes, Megabutes, Gigabytes or Terrabytes, e.g. 100G or 1T
+-f | --filesize=X Makes thte file size of each file X. Follow X with either K, M, G or T for Kilobytes, Megabutes, Gigabytes or Terrabytes, e.g. 100G or 1T
 -n | --numfiles N : Creates a total of N files
 -e | --ext X : Makes X the extension of the files.  Default is dat
 -t | --threads T : Runs up to T threads.  Each thread works on subdirectory
