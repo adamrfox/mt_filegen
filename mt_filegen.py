@@ -110,26 +110,31 @@ def write_files (dir_ent, files_per_dir, ext, file_size, num_files):
                 fname = os.path.join(dir, 'file_' + str(fn) + "." + ext)
                 if not os.path.isfile(fname):
                     clash = False
-            bytes_written = 0
-            with open(fname, "wb") as fout:
-                while bytes_written < file_size:
-                    if file_size - bytes_written < WRITE_SIZE:
-                        if compressible:
-                            c_size = int((file_size - bytes_written) / 2)
-                            fout.write(b'\0' * c_size)
-                            fout.write(os.urandom(c_size))
+            if not SPARSE_FILES:
+                bytes_written = 0
+                with open(fname, "wb") as fout:
+                    while bytes_written < file_size:
+                        if file_size - bytes_written < WRITE_SIZE:
+                            if compressible:
+                                c_size = int((file_size - bytes_written) / 2)
+                                fout.write(b'\0' * c_size)
+                                fout.write(os.urandom(c_size))
+                            else:
+                                fout.write(os.urandom(file_size - bytes_written))
+                            bytes_written += file_size - bytes_written
                         else:
-                            fout.write(os.urandom(file_size - bytes_written))
-                        bytes_written += file_size - bytes_written
-                    else:
-                        if compressible:
-                            c_size = int(WRITE_SIZE / 2)
-                            fout.write(b'\0' * c_size)
-                            fout.write(os.urandom(WRITE_SIZE))
-                        else:
-                            fout.write(os.urandom(WRITE_SIZE))
-                        bytes_written += WRITE_SIZE
-                file_count.increment()
+                            if compressible:
+                                c_size = int(WRITE_SIZE / 2)
+                                fout.write(b'\0' * c_size)
+                                fout.write(os.urandom(WRITE_SIZE))
+                            else:
+                                fout.write(os.urandom(WRITE_SIZE))
+                            bytes_written += WRITE_SIZE
+            else:
+                sparse_size = random.randint(sparse_min, sparse_max)
+                fout = open(fname, 'wb')
+                fout.truncate(sparse_size)
+            file_count.increment()
             fout.close()
             if verbose:
                 print ("\tWrote " + fname + " (" + fcount.value + "/" + num_files)
@@ -245,6 +250,7 @@ def usage():
     sys.stderr.write("    X:Y:Z creates 3 levels deep the first level is X wide, the next level Y wide, then Z wide, etc.\n")
     sys.stderr.write("-s | --size X : Makes the total size of the dataset to X.  Follow X with either M, G or T for Megabutes, Gigabytes or Terrabytes, e.g. 100G or 1T\n")
     sys.stderr.write("-f | --size X : Makes the file size of the dataset to X.  Follow X with either M, G or T for Megabutes, Gigabytes or Terrabytes, e.g. 100G or 1T\n")
+    sys.stderr.write("-S | --sparse X:Y Makes sparse files between sizes X and Y. Follow X/Y with either M, G or T for Megabutes, Gigabytes or Terrabytes, e.g. 100G or 1T\n")
     sys.stderr.write("-n | --numfiles N : Creates a total of N files\n")
     sys.stderr.write("-e | --ext X : Makes X the extension of the files.  Default is dat\n")
     sys.stderr.write("-t | --threads T : Runs up to T threads.  Each thread works on subdirectory\n")
@@ -274,8 +280,9 @@ if __name__ == "__main__":
     bd_list = []
     WRITE_SIZE = 2097152
     compressible = False
+    SPARSE_FILES = False
 
-    optlist, args = getopt.getopt(sys.argv[1:], 'hd:e:s:n:t:D:f:Cvrc', ['help', 'depth=', 'size=', 'numfiles=', 'ext=','threads=', 'distribute=', 'cleanup', 'verbose', 'roundup', 'compressible', 'filesize='])
+    optlist, args = getopt.getopt(sys.argv[1:], 'hd:e:s:n:t:D:f:CvrcS:', ['help', 'depth=', 'size=', 'numfiles=', 'ext=','threads=', 'distribute=', 'cleanup', 'verbose', 'roundup', 'compressible', 'filesize=', '--sparse='])
     for opt, a in optlist:
         if opt in ('-d', "--depth"):
             depth = a.split(':')
@@ -309,6 +316,17 @@ if __name__ == "__main__":
             else:
                 file_size = int(size_s)
             size = 0
+        if opt in ('-S', '--sparse'):
+            SPARSE_FILES = True
+            (s_min, s_max) = a.split(':')
+            if s_min[-1].isalpha():
+                unit = s_min[-1]
+                sparse_min = int(s_min[:-1])
+                sparse_min = get_bytes(sparse_min, unit)
+            if s_max[-1].isalpha():
+                unit = s_max[-1]
+                sparse_max = int(s_max[:-1])
+                sparse_max = get_bytes(sparse_max, unit)
         if opt in ('-h', "--help"):
             usage()
     if size and file_size:
