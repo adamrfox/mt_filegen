@@ -20,6 +20,7 @@ Usage: mt_filegen.py [-hvCcr] [-d depth] [[-s size] | [-f size]] [-n number_file
     X:Y:Z creates 3 levels deep the first level is X wide, the next level Y wide, then Z wide, etc.
 -s | --size=X : Makes the total size of the dataset to X.  Follow X with either K, M, G or T for Kilobytes, Megabutes, Gigabytes or Terrabytes, e.g. 100G or 1T
 -f | --filesize=X Makes thte file size of each file X. Follow X with either K, M, G or T for Kilobytes, Megabutes, Gigabytes or Terrabytes, e.g. 100G or 1T
+-S | --sparse_files=X:Y. Makes sparse files between sizes X and Y. Follow X/Y with either M, G or T for Megabutes, Gigabytes or Terrabytes, e.g. 100G or 1T
 -n | --numfiles N : Creates a total of N files
 -e | --ext X : Makes X the extension of the files.  Default is dat
 -t | --threads T : Runs up to T threads.  Each thread works on subdirectory
