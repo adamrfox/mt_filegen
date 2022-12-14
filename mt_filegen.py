@@ -327,16 +327,22 @@ if __name__ == "__main__":
                     unit = s_min[-1]
                     sparse_min = int(s_min[:-1])
                     sparse_min = get_bytes(sparse_min, unit)
+                else:
+                    sparse_min = int(s_min[:-1])
                 if s_max[-1].isalpha():
                     unit = s_max[-1]
                     sparse_max = int(s_max[:-1])
                     sparse_max = get_bytes(sparse_max, unit)
+                else:
+                    sparse_max = int(s_max[:-1])
             else:
                 if a[-1].isalpha():
                     unit = a[-1]
                     sparse_min = int(a[:-1])
                     sparse_min = get_bytes(sparse_min, unit)
-                    sparse_max = sparse_min
+                else:
+                    sparse_min =  int(a[:-1])
+                sparse_max = sparse_min
         if opt in ('-h', "--help"):
             usage()
     if size and file_size:
