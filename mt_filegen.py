@@ -131,7 +131,10 @@ def write_files (dir_ent, files_per_dir, ext, file_size, num_files):
                                 fout.write(os.urandom(WRITE_SIZE))
                             bytes_written += WRITE_SIZE
             else:
-                sparse_size = random.randint(sparse_min, sparse_max)
+                if sparse_min < sparse_max:
+                    sparse_size = random.randint(sparse_min, sparse_max)
+                else:
+                    sparse_size = sparse_min
                 fout = open(fname, 'wb')
                 fout.truncate(sparse_size)
             file_count.increment()
@@ -250,7 +253,7 @@ def usage():
     sys.stderr.write("    X:Y:Z creates 3 levels deep the first level is X wide, the next level Y wide, then Z wide, etc.\n")
     sys.stderr.write("-s | --size X : Makes the total size of the dataset to X.  Follow X with either M, G or T for Megabutes, Gigabytes or Terrabytes, e.g. 100G or 1T\n")
     sys.stderr.write("-f | --size X : Makes the file size of the dataset to X.  Follow X with either M, G or T for Megabutes, Gigabytes or Terrabytes, e.g. 100G or 1T\n")
-    sys.stderr.write("-S | --sparse X:Y Makes sparse files between sizes X and Y. Follow X/Y with either M, G or T for Megabutes, Gigabytes or Terrabytes, e.g. 100G or 1T\n")
+    sys.stderr.write("-S | --sparse X | X:Y Makes sparse files between sizes X and Y (or just use X if one size is desired). Follow X/Y with either M, G or T for Megabutes, Gigabytes or Terrabytes, e.g. 100G or 1T\n")
     sys.stderr.write("-n | --numfiles N : Creates a total of N files\n")
     sys.stderr.write("-e | --ext X : Makes X the extension of the files.  Default is dat\n")
     sys.stderr.write("-t | --threads T : Runs up to T threads.  Each thread works on subdirectory\n")
@@ -318,15 +321,22 @@ if __name__ == "__main__":
             size = 0
         if opt in ('-S', '--sparse'):
             SPARSE_FILES = True
-            (s_min, s_max) = a.split(':')
-            if s_min[-1].isalpha():
-                unit = s_min[-1]
-                sparse_min = int(s_min[:-1])
-                sparse_min = get_bytes(sparse_min, unit)
-            if s_max[-1].isalpha():
-                unit = s_max[-1]
-                sparse_max = int(s_max[:-1])
-                sparse_max = get_bytes(sparse_max, unit)
+            if ':' in a:
+                (s_min, s_max) = a.split(':')
+                if s_min[-1].isalpha():
+                    unit = s_min[-1]
+                    sparse_min = int(s_min[:-1])
+                    sparse_min = get_bytes(sparse_min, unit)
+                if s_max[-1].isalpha():
+                    unit = s_max[-1]
+                    sparse_max = int(s_max[:-1])
+                    sparse_max = get_bytes(sparse_max, unit)
+            else:
+                if a[-1].isalpha():
+                    unit = a[-1]
+                    sparse_min = int(a[:-1])
+                    sparse_min = get_bytes(sparse_min, unit)
+                    sparse_max = sparse_min
         if opt in ('-h', "--help"):
             usage()
     if size and file_size:
