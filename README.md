@@ -3,24 +3,24 @@ A project to build a multi-threaded file generation tool
 
 This is a tool that generates a set of files in a given tree.  It allows the user to set the depth as well as width of the tree at each level, the number of file, the total size of the dataset, as well as whether the data is compressible or not.
 Working in storage and data management for years, I have found it useful to be able to generate dummy datasets that mimic
-certain applicaions or customer environments.  I never really liked the tools that were out there although some are certianly
+certain applicaions or customer environments.  I never really liked the tools that were out there although some are certainly
 better than others.  And I wanted an excuse to learn multi-threading in Python, so mt_filegen was born.
 
 It currently is set to run with Python 2.7 or 3.x.  If you find code compatibility issues, let me know or feel free to contribute.
 
 Let's start with the syntax:
 <pre>
-Usage: mt_filegen.py [-hvCcr] [-d depth] [[-s size] | [-f size]] [-n number_files] [-e ext] [-t threads] [-D distrubtion] directory
+Usage: mt_filegen.py [-hvCcr] [-d depth] [[-s size] | [-f size]] [-n number_files] [-e ext] [-t threads] [-D distribution] directory
 -h | --help : Prints this message
 -v | --verbose : Prints each filename as written
 -C | --cleanup : Cleanup files instead of create them
--c | --compressable : Ensure files are compressable
+-c | --compressible : Ensure files are compressible
 -r | --roundup : Make sure the exact number of files is written even if it goes over the size limit
 -d | --depth depth_string : Describes the depth of the tree.  A simple int goes N levels deep.
     X:Y:Z creates 3 levels deep the first level is X wide, the next level Y wide, then Z wide, etc.
 -s | --size=X : Makes the total size of the dataset to X.  Follow X with either K, M, G or T for Kilobytes, Megabutes, Gigabytes or Terrabytes, e.g. 100G or 1T
--f | --filesize=X Makes thte file size of each file X. Follow X with either K, M, G or T for Kilobytes, Megabutes, Gigabytes or Terrabytes, e.g. 100G or 1T
--S | --sparse X | X:Y Makes sparse files between sizes X and Y (or just use X if one size is desired). Follow X/Y with either M, G or T for Megabutes, Gigabytes or Terrabytes, e.g. 100G or 1T
+-f | --filesize= X[:Y] Makes the file size of each file between X an Y. Follow X/Y with either K, M, G or T for Kilobytes, Megabutes, Gigabytes or Terrabytes, e.g. 100G or 1T
+-S | --sparse | Makes the files sparse files.
 -n | --numfiles N : Creates a total of N files
 -e | --ext X : Makes X the extension of the files.  Default is dat
 -t | --threads T : Runs up to T threads.  Each thread works on subdirectory
