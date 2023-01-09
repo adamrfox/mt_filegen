@@ -113,28 +113,32 @@ def write_files (dir_ent, files_per_dir, ext, file_size, num_files):
             if not SPARSE_FILES:
                 bytes_written = 0
                 with open(fname, "wb") as fout:
-                    while bytes_written < file_size:
-                        if file_size - bytes_written < WRITE_SIZE:
+                    if not file_size:
+                        write_file_size = random.randint(size_min, size_max)
+                    else:
+                        write_file_size = file_size
+                    while bytes_written < write_file_size:
+                        if write_file_size - bytes_written < WRITE_SIZE:
                             if compressible:
-                                c_size = int((file_size - bytes_written) / 2)
+                                c_size = int((write_file_size - bytes_written) / 2)
                                 fout.write(b'\0' * c_size)
                                 fout.write(os.urandom(c_size))
                             else:
-                                fout.write(os.urandom(file_size - bytes_written))
-                            bytes_written += file_size - bytes_written
+                                fout.write(os.urandom(write_file_size - bytes_written))
+                            bytes_written += write_file_size - bytes_written
                         else:
                             if compressible:
                                 c_size = int(WRITE_SIZE / 2)
                                 fout.write(b'\0' * c_size)
-                                fout.write(os.urandom(WRITE_SIZE))
+                                fout.write(os.urandom(c_size))
                             else:
                                 fout.write(os.urandom(WRITE_SIZE))
                             bytes_written += WRITE_SIZE
             else:
-                if sparse_min < sparse_max:
-                    sparse_size = random.randint(sparse_min, sparse_max)
+                if size_min < size_max:
+                    sparse_size = random.randint(size_min, size_max)
                 else:
-                    sparse_size = sparse_min
+                    sparse_size = size_min
                 fout = open(fname, 'wb')
                 fout.truncate(sparse_size)
             file_count.increment()
@@ -247,13 +251,13 @@ def usage():
     sys.stderr.write("-h | --help : Prints this message\n")
     sys.stderr.write ("-v | --verbose : Prints each filename as written\n")
     sys.stderr.write("-C | --cleanup : Cleanup files instead of create them\n")
-    sys.stderr.write("-c | --compressable : Ensure files are compressable\n")
+    sys.stderr.write("-c | --compressible : Ensure files are compressible\n")
     sys.stderr.write("-r | --roundup : Make sure the exact number of files is written even if it goes over the size limit\n")
     sys.stderr.write("-d | --depth depth_string : Describes the depth of the tree.  A simple int goes N levels deep.\n")
     sys.stderr.write("    X:Y:Z creates 3 levels deep the first level is X wide, the next level Y wide, then Z wide, etc.\n")
     sys.stderr.write("-s | --size X : Makes the total size of the dataset to X.  Follow X with either M, G or T for Megabutes, Gigabytes or Terrabytes, e.g. 100G or 1T\n")
-    sys.stderr.write("-f | --size X : Makes the file size of the dataset to X.  Follow X with either M, G or T for Megabutes, Gigabytes or Terrabytes, e.g. 100G or 1T\n")
-    sys.stderr.write("-S | --sparse X | X:Y Makes sparse files between sizes X and Y (or just use X if one size is desired). Follow X/Y with either M, G or T for Megabutes, Gigabytes or Terrabytes, e.g. 100G or 1T\n")
+    sys.stderr.write("-f | --filesize X[:Y] : Makes the file size of the dataset between X and Y.  Follow X with either M, G or T for Megabutes, Gigabytes or Terrabytes, e.g. 100G or 1T\n")
+    sys.stderr.write("-S | --sparse : Makes files sparse\n")
     sys.stderr.write("-n | --numfiles N : Creates a total of N files\n")
     sys.stderr.write("-e | --ext X : Makes X the extension of the files.  Default is dat\n")
     sys.stderr.write("-t | --threads T : Runs up to T threads.  Each thread works on subdirectory\n")
@@ -268,6 +272,8 @@ if __name__ == "__main__":
     depth = ['1']
     size_s = ''
     size = 0
+    size_min = 0
+    size_max = 0
     ti = 0
     num_files = 0
     file_size = 0
@@ -311,49 +317,43 @@ if __name__ == "__main__":
         if opt in ('-c', "--compressible"):
             compressible = True
         if opt in ('-f', '--filesize'):
-            size_s = a
-            if size_s[-1].isalpha():
-                unit = size_s[-1]
-                file_size = int(size_s[:-1])
-                file_size = get_bytes(file_size, unit)
+            if not ':' in a:
+                size_s= a
+                if size_s[-1].isalpha():
+                    unit = size_s[-1]
+                    size_min = int(size_s[:-1])
+                    size_min = get_bytes(size_min, unit)
+                size_max = size_min
             else:
-                file_size = int(size_s)
-            size = 0
-        if opt in ('-S', '--sparse'):
-            SPARSE_FILES = True
-            if ':' in a:
                 (s_min, s_max) = a.split(':')
                 if s_min[-1].isalpha():
                     unit = s_min[-1]
-                    sparse_min = int(s_min[:-1])
-                    sparse_min = get_bytes(sparse_min, unit)
+                    size_min = int(s_min[:-1])
+                    size_min = get_bytes(size_min, unit)
                 else:
-                    sparse_min = int(s_min[:-1])
+                    size_min = int(s_min[:-1])
                 if s_max[-1].isalpha():
                     unit = s_max[-1]
-                    sparse_max = int(s_max[:-1])
-                    sparse_max = get_bytes(sparse_max, unit)
+                    size_max = int(s_max[:-1])
+                    size_max = get_bytes(size_max, unit)
                 else:
-                    sparse_max = int(s_max[:-1])
-            else:
-                if a[-1].isalpha():
-                    unit = a[-1]
-                    sparse_min = int(a[:-1])
-                    sparse_min = get_bytes(sparse_min, unit)
-                else:
-                    sparse_min =  int(a[:-1])
-                sparse_max = sparse_min
+                    size_min = int(s_max[:-1])
+#            size = 0
+        if opt in ('-S', '--sparse'):
+            SPARSE_FILES = True
         if opt in ('-h', "--help"):
             usage()
-    if size and file_size:
+    if size and size_min:
         sys.stderr.write('Both -s and -f cannot be used at the same time\n')
         exit(2)
     root = args[0]
     run_queue = Queue.Queue(maxsize=threads)
     dir_queue = Queue.Queue()
     if not cleanup:
-        if not file_size:
+        if not size_min:
             file_size = int(round(size/num_files))
+        else:
+            file_size = 0
     else:
         ld = os.listdir(root)
 #        file_size = 0
@@ -383,35 +383,6 @@ if __name__ == "__main__":
             ldepth = copy.deepcopy(depth)
             files_per_thread = calc_files_per_dir_bottom(ldepth, num_files, width)
     mt_writer(dir_queue, cleanup, False, threads, ext, file_size, files_per_thread, num_files)
-    '''
-    while not dir_queue.empty():
-        dir = dir_queue.get()
-        dir_name = dir.keys()[0]
-        if not cleanup:
-            try:
-              os.mkdir(dir_name)
-            except OSError:
-                print "Cleaning " + dir_name
-                shutil.rmtree(dir_name)
-                os.mkdir(dir_name)
-            if threads > 0:
-                while run_queue.full():
-                    time.sleep(1)
-            run_queue.put(dir)
-            job.append (threading.Thread(target=write_files, args=(dir,files_per_thread,ext,file_size)))
-        else:
-            if threads > 0:
-                while run_queue.full():
-                    time.sleep (1)
-            run_queue.put(dir)
-            job.append (threading.Thread(target=clean_dir, args=([dir])))
-        job[ti].start()
-        ti += 1
-    if not run_queue.empty():
-        while not run_queue.empty():
-            print "Waiting for " + str(run_queue.qsize()) + " threads to finish"
-            time.sleep (5)
-    '''
     if roundup:
         delta = num_files - file_count.value
         if num_files > file_count.value:
