@@ -107,7 +107,11 @@ def write_files (dir_ent, files_per_dir, ext, file_size, num_files):
             while clash:
                 fn = random.randint(0, width * files_per_thread * 1000)
                 fn = '%x' % fn
-                fname = os.path.join(dir, 'file_' + str(fn) + "." + ext)
+                if len(ext) == 1:
+                    f_ext = ext[0]
+                else:
+                    f_ext = ext[random.randint(0,len(ext)-1)]
+                fname = os.path.join(dir, 'file_' + str(fn) + "." + f_ext)
                 if not os.path.isfile(fname):
                     clash = False
             if not SPARSE_FILES:
@@ -259,14 +263,14 @@ def usage():
     sys.stderr.write("-f | --filesize X[:Y] : Makes the file size of the dataset between X and Y.  Follow X with either M, G or T for Megabutes, Gigabytes or Terrabytes, e.g. 100G or 1T\n")
     sys.stderr.write("-S | --sparse : Makes files sparse\n")
     sys.stderr.write("-n | --numfiles N : Creates a total of N files\n")
-    sys.stderr.write("-e | --ext X : Makes X the extension of the files.  Default is dat\n")
+    sys.stderr.write("-e | --ext X[,Y,..,Z] : Specify extensions with a comma separated list.  Default: dat,exe,pdf,mp3,docx\n")
     sys.stderr.write("-t | --threads T : Runs up to T threads.  Each thread works on subdirectory\n")
     sys.stderr.write("-D | distrubute mixed|bottom : Set to 'mixed' files are written throutout the tree.  This is the default\n")
     sys.stderr.write("    Set to 'bottom' files are only written at the bottom of the tree\n")
     exit (0)
 
 if __name__ == "__main__":
-    ext = "dat"
+    ext = ['dat', 'exe', 'pdf', 'mp3', 'docx']
     threads = 0
     width = 1
     depth = ['1']
@@ -303,7 +307,7 @@ if __name__ == "__main__":
         if opt in ('-n', "--numfiles"):
             num_files = int(a)
         if opt in ('-e', "--ext"):
-            ext = a
+           ext = a.split(',')
         if opt in ('-t', "--threads"):
             threads = int(a)
         if opt in ('-D', "--distrubute"):

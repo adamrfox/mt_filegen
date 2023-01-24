@@ -22,7 +22,7 @@ Usage: mt_filegen.py [-hvCcr] [-d depth] [[-s size] | [-f size]] [-n number_file
 -f | --filesize= X[:Y] Makes the file size of each file between X an Y. Follow X/Y with either K, M, G or T for Kilobytes, Megabutes, Gigabytes or Terrabytes, e.g. 100G or 1T
 -S | --sparse | Makes the files sparse files.
 -n | --numfiles N : Creates a total of N files
--e | --ext X : Makes X the extension of the files.  Default is dat
+-e | --ext X[,Y,..,Z] : Specify extensions with a comma separated list.  Default: dat,exe,pdf,mp3,docx
 -t | --threads T : Runs up to T threads.  Each thread works on subdirectory
 -D | distrubute mixed|bottom : Set to 'mixed' files are written throutout the tree.  This is the default
     Set to 'bottom' files are only written at the bottom of the tree
